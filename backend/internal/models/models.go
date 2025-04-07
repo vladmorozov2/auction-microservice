@@ -1,6 +1,7 @@
 package models
 
 import (
+	"gorm.io/gorm"
 	"time"
 )
 
@@ -16,6 +17,16 @@ type Auction struct {
 	WinnerID        *int      `gorm:"index"`
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
+}
+
+func (l *Auction) BeforeCreate(tx *gorm.DB) (err error) {
+	if l.CreatedAt.IsZero() {
+		l.CreatedAt = time.Now()
+	}
+	if l.UpdatedAt.IsZero() {
+		l.UpdatedAt = time.Now()
+	}
+	return
 }
 
 type Bid struct {
