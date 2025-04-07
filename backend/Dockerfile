@@ -10,7 +10,8 @@ WORKDIR /build
 # Copy source code
 COPY . .
 
-# Download Go dependencies
+# Download Go dependencies and tidy up the modules
+RUN go mod tidy
 RUN go mod download
 
 # Build the Go application

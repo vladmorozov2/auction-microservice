@@ -1,104 +1,87 @@
 package main
 
 import (
-	"database/sql"
-	"fmt"
-	"github.com/gin-gonic/contrib/cors"
-	"github.com/gin-gonic/gin"
-	_ "github.com/lib/pq"
-	"log"
-	"net/http"
-	"os"
+    "fmt"
+    "github.com/gin-gonic/contrib/cors"
+    "github.com/gin-gonic/gin"
+    "gorm.io/driver/postgres"
+    "gorm.io/gorm"
+    "log"
+    "net/http"
+    "os"
 )
 
-var db *sql.DB // Додано глобальну змінну
+var gormDB *gorm.DB
 
-func indexView(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "Hello World!"})
-}
-
-func SetupRoutes() *gin.Engine {
-	router := gin.Default()
-
-	config := cors.DefaultConfig()
-	config.AllowAllOrigins = true
-	router.Use(cors.New(config))
-
-	router.GET("/", indexView)
-	router.GET("/todo/:item", CreateTodoItem)
-
-	// Додайте ваші маршрути для роботи з БД тут
-
-	return router
-}
-
-func SetupPostgres() {
-	username := os.Getenv("DB_USER")
-	password := os.Getenv("DB_PASSWORD")
-	host := os.Getenv("DB_HOST")
-	dbname := os.Getenv("DB_NAME")
-
-	// Перевірка змінних оточення
-	if username == "" || password == "" || host == "" || dbname == "" {
-		log.Fatal("Environment variables not set properly")
-	}
-
-	connStr := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable", host, username, password, dbname)
-
-	var err error
-	db, err = sql.Open("postgres", connStr)
-	if err != nil {
-		log.Fatalf("Error opening database: %v", err)
-	}
-
-	if err = db.Ping(); err != nil {
-		log.Fatalf("Error connecting to database: %v", err)
-	}
-
-	log.Println("Connected to PostgreSQL")
+type ListItem struct {
+    ID   uint `gorm:"primaryKey" json:"id"`
+    Item string `gorm:"not null" json:"item"`
+    Done bool `gorm:"default:false" json:"done"`
 }
 
 func main() {
-	SetupPostgres()
-	defer db.Close() // Закриття з'єднання при завершенні
+    var err error
+    gormDB, err = connectToPostgreSQL()
+    if err != nil {
+        log.Fatalf("Error connecting to the database: %v", err)
+    }
 
-	router := SetupRoutes()
-	router.Run(":8081")
+    router := SetupRoutes()
+    router.Run(":8081")
 }
 
-type ListItem struct {
-	Id   string `json:"id"`
-	Item string `json:"item"`
-	Done bool   `json:"done"`
+func connectToPostgreSQL() (*gorm.DB, error) {
+    username := os.Getenv("DB_USER")
+    password := os.Getenv("DB_PASSWORD")
+    host := os.Getenv("DB_HOST")
+    dbname := os.Getenv("DB_NAME")
+
+    dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=5432 sslmode=disable",
+        host, username, password, dbname)
+
+    db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+    if err != nil {
+        return nil, err
+    }
+
+    err = db.AutoMigrate(&ListItem{})
+    if err != nil {
+        return nil, fmt.Errorf("failed to auto migrate: %v", err)
+    }
+
+    log.Println("Connected to PostgreSQL")
+    return db, nil
+}
+
+func SetupRoutes() *gin.Engine {
+    router := gin.Default()
+
+    config := cors.DefaultConfig()
+    config.AllowAllOrigins = true
+    router.Use(cors.New(config))
+
+    router.GET("/", indexView)
+    router.POST("/todo", CreateTodoItem)
+
+    return router
+}
+
+func indexView(c *gin.Context) {
+    c.JSON(http.StatusOK, gin.H{"message": "Hello World!"})
 }
 
 func CreateTodoItem(c *gin.Context) {
-	item := c.Param("item")
+    var todo ListItem
+    if err := c.ShouldBindJSON(&todo); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
 
-	// Validate item
-	if len(item) == 0 {
-		c.JSON(http.StatusNotAcceptable, gin.H{"message": "please enter an item"})
-		return
-	}
+    result := gormDB.Create(&todo)
+    if result.Error != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
+        return
+    }
 
-	// Create todo item struct
-	var TodoItem ListItem
-	TodoItem.Item = item
-	TodoItem.Done = false
-
-	// Insert item into DB and return the generated ID
-	err := db.QueryRow("INSERT INTO list(item, done) VALUES($1, $2) RETURNING id;", TodoItem.Item, TodoItem.Done).Scan(&TodoItem.Id)
-	if err != nil {
-		log.Println(err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "error with DB"})
-		return
-	}
-
-	// Log message
-	log.Println("created todo item with ID", TodoItem.Id)
-
-	// Return success response with item ID
-	c.Header("Access-Control-Allow-Origin", "*")
-	c.Header("Access-Control-Allow-Headers", "access-control-allow-origin, access-control-allow-headers")
-	c.JSON(http.StatusCreated, gin.H{"item": TodoItem})
+    c.JSON(http.StatusCreated, todo)
 }
