@@ -79,7 +79,7 @@ func (h *Handler) GetAuctionByID(c *gin.Context) {
 }
 
 type WinnerRequest struct {
-	WinnerID int `json:"winner_id"` // Match the JSON key sent by the client
+	WinnerID int `json:"winner_id"`
 }
 
 func (h *Handler) SetAuctionWinner(c *gin.Context) {
@@ -116,4 +116,25 @@ func (h *Handler) SetAuctionWinner(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "auction winner set successfully"})
+}
+
+func (h *Handler) GetAuctionWinnerByID(c *gin.Context) {
+	id := c.Param("id")
+
+	auction, err := h.repo.GetAuctionByID(c.Request.Context(), id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "auction not found"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve auction"})
+		}
+		return
+	}
+
+	if auction.WinnerID == nil {
+		c.JSON(http.StatusOK, gin.H{"message": "no winner for this auction"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"winner_id": auction.WinnerID})
 }

@@ -12,6 +12,8 @@ type Repository interface {
 	GetOpenAuctions(ctx context.Context) ([]*models.Auction, error)
 	GetAuctionByID(ctx context.Context, id string) (*models.Auction, error)
 	SetAuctionWinner(ctx context.Context, auctionID string, winnerID int) error
+	CreateBid(ctx context.Context, bid *models.Bid) error
+	GetLastBidForAuction(ctx context.Context, auctionID string) (*models.Bid, error)
 }
 
 type PostgreSQL struct {
