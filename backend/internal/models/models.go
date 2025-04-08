@@ -2,7 +2,6 @@ package models
 
 import (
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 	"time"
 )
 
@@ -21,16 +20,17 @@ type Auction struct {
 }
 
 
-func (l *Auction) BeforeCreate(tx *gorm.DB) (err error) {
-	l.ID = uuid.New()
-	if l.CreatedAt.IsZero() {
-		l.CreatedAt = time.Now()
-	}
-	if l.UpdatedAt.IsZero() {
-		l.UpdatedAt = time.Now()
-	}
-	return
-}
+// func (l *Auction) BeforeCreate(tx *gorm.DB) (err error) {
+// 	l.ID = uuid.New()
+// 	if l.CreatedAt.IsZero() {
+// 		l.CreatedAt = time.Now()
+// 	}
+// 	if l.UpdatedAt.IsZero() {
+// 		l.UpdatedAt = time.Now()
+// 	}
+// 	return
+// }
+
 
 type Bid struct {
 	ID         uint    `gorm:"primaryKey"`

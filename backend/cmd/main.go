@@ -10,17 +10,10 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"
-	"net/http"
 	"os"
 )
 
 var gormDB *gorm.DB
-
-type ListItem struct {
-	ID   uint   `gorm:"primaryKey" json:"id"`
-	Item string `gorm:"not null" json:"item"`
-	Done bool   `gorm:"default:false" json:"done"`
-}
 
 func main() {
 	var err error
@@ -50,11 +43,6 @@ func connectToPostgreSQL() (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	err = db.AutoMigrate(&ListItem{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to auto migrate: %v", err)
-	}
 	err = db.AutoMigrate(&models.Auction{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to auto migrate: %v", err)
@@ -75,46 +63,7 @@ func SetupRoutes(handler *handlers.Handler) *gin.Engine {
 	config.AllowAllOrigins = true
 	router.Use(cors.New(config))
 
-	router.GET("/", indexView)
-	router.POST("/todo", CreateTodoItem)
-	router.POST("/auction", CreateAuction)
-	router.POST("/auction1", handler.CreateAuction)
+	router.POST("/auction", handler.CreateAuction)
 
 	return router
-}
-
-func indexView(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "Hello World!"})
-}
-
-func CreateTodoItem(c *gin.Context) {
-	var todo ListItem
-	if err := c.ShouldBindJSON(&todo); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	result := gormDB.Create(&todo)
-	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
-		return
-	}
-
-	c.JSON(http.StatusCreated, todo)
-}
-
-func CreateAuction(c *gin.Context) {
-	var auction models.Auction
-	if err := c.ShouldBindJSON(&auction); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	result := gormDB.Create(&auction)
-	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
-		return
-	}
-
-	c.JSON(http.StatusCreated, auction)
 }
