@@ -14,6 +14,7 @@ type Repository interface {
 	SetAuctionWinner(ctx context.Context, auctionID string, winnerID int) error
 	CreateBid(ctx context.Context, bid *models.Bid) error
 	GetLastBidForAuction(ctx context.Context, auctionID string) (*models.Bid, error)
+	GetBidsByAuctionID(ctx context.Context, auctionID string) ([]*models.Bid, error)
 }
 
 type PostgreSQL struct {

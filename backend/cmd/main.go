@@ -66,10 +66,10 @@ func SetupRoutes(handler *handlers.Handler) *gin.Engine {
 	router.POST("/auction", handler.CreateAuction)
 	router.GET("/auctions", handler.GetOpenAuctions)
 	router.GET("/auction/:id", handler.GetAuctionByID)
-	// router.POST("/auction/:id/bid", handler.PlaceBid)
 	router.POST("/auction/:id/winner", handler.SetAuctionWinner)
 	router.GET("/auction/:id/winner", handler.GetAuctionWinnerByID)
 	router.POST("/bid/:auction_id", handler.CreateBid)
+	router.GET("/bids/:auction_id", handler.GetAllBids)
 
 	return router
 }
