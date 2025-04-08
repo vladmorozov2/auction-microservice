@@ -8,8 +8,9 @@ import (
 )
 
 type Repository interface {
-	// GetAuctionByID(id int) (*models.Auction, error)
 	CreateAuction(ctx context.Context, auction *models.Auction) error
+	GetOpenAuctions(ctx context.Context) ([]*models.Auction, error)
+	GetAuctionByID(ctx context.Context, id string) (*models.Auction, error)
 }
 
 type PostgreSQL struct {

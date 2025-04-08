@@ -1,13 +1,14 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
-	"net/http"
-	"time"
-
 	"github.com/gin-gonic/gin"
 	"github.com/vladmorozov2/auction-service/internal/models"
 	"github.com/vladmorozov2/auction-service/internal/repository"
+	"gorm.io/gorm"
+	"net/http"
+	"time"
 )
 
 type Handler struct {
@@ -50,4 +51,32 @@ func (h *Handler) CreateAuction(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, auction)
+}
+
+func (h *Handler) GetOpenAuctions(c *gin.Context) {
+	auctions, err := h.repo.GetOpenAuctions(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get open auctions"})
+		return
+	}
+
+	c.JSON(http.StatusOK, auctions)
+}
+func (h *Handler) GetAuctionByID(c *gin.Context) {
+	id := c.Param("id")
+
+	// Optional: Validate UUID format (if using a UUID library)
+	// For simplicity, we'll assume it's a valid UUID string here
+	auction, err := h.repo.GetAuctionByID(c.Request.Context(), id)
+	if err != nil {
+		// Check if the error is "not found"
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "auction not found"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve auction"})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, auction)
 }

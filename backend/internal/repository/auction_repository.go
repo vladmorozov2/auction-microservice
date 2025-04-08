@@ -20,3 +20,21 @@ func (p *PostgreSQL) CreateAuction(ctx context.Context, auction *models.Auction)
 
 	return p.db.WithContext(ctx).Create(auction).Error
 }
+
+func (p *PostgreSQL) GetOpenAuctions(ctx context.Context) ([]*models.Auction, error) {
+	var auctions []*models.Auction
+	err := p.db.WithContext(ctx).Where("status = ?", "open").Find(&auctions).Error
+	if err != nil {
+		return nil, err
+	}
+	return auctions, nil
+}
+
+func (p *PostgreSQL) GetAuctionByID(ctx context.Context, id string) (*models.Auction, error) {
+	var auction models.Auction
+	err := p.db.WithContext(ctx).Where("id = ?", id).First(&auction).Error
+	if err != nil {
+		return nil, err
+	}
+	return &auction, nil
+}

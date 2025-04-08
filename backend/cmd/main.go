@@ -64,6 +64,8 @@ func SetupRoutes(handler *handlers.Handler) *gin.Engine {
 	router.Use(cors.New(config))
 
 	router.POST("/auction", handler.CreateAuction)
+	router.GET("/auctions", handler.GetOpenAuctions)
+	router.GET("/auction/:id", handler.GetAuctionByID)
 
 	return router
 }
