@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/google/uuid"
 	"github.com/vladmorozov2/auction-service/internal/models"
 	"gorm.io/gorm"

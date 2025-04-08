@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"errors"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/vladmorozov2/auction-service/internal/models"
 	"github.com/vladmorozov2/auction-service/internal/repository"
