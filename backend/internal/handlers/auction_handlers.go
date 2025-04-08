@@ -65,11 +65,8 @@ func (h *Handler) GetOpenAuctions(c *gin.Context) {
 func (h *Handler) GetAuctionByID(c *gin.Context) {
 	id := c.Param("id")
 
-	// Optional: Validate UUID format (if using a UUID library)
-	// For simplicity, we'll assume it's a valid UUID string here
 	auction, err := h.repo.GetAuctionByID(c.Request.Context(), id)
 	if err != nil {
-		// Check if the error is "not found"
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "auction not found"})
 		} else {
@@ -79,4 +76,44 @@ func (h *Handler) GetAuctionByID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, auction)
+}
+
+type WinnerRequest struct {
+	WinnerID int `json:"winner_id"` // Match the JSON key sent by the client
+}
+
+func (h *Handler) SetAuctionWinner(c *gin.Context) {
+	id := c.Param("id")
+	fmt.Println("Setting auction winner for ID:", id)
+
+	// Bind JSON to a struct instead of directly to an int
+	var req WinnerRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		fmt.Println("Error binding JSON:", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	fmt.Println("Winner ID:", req.WinnerID)
+	if req.WinnerID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "winner_id must be greater than 0"})
+		return
+	}
+
+	err := h.repo.SetAuctionWinner(c.Request.Context(), id, req.WinnerID)
+	if err != nil {
+		switch {
+		case errors.Is(err, repository.ErrAuctionNotFound):
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		case errors.Is(err, repository.ErrAuctionAlreadyWon):
+			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		case errors.Is(err, repository.ErrAuctionAlreadyClosed):
+			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to set auction winner"})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "auction winner set successfully"})
 }
