@@ -59,8 +59,6 @@ func (p *PostgreSQL) CreateBid(ctx context.Context, bid *models.Bid) error {
 	bid.UpdatedAt = time.Now()
 	bid.CreatedAt = time.Now()
 	bid.ID = uuid.New()
-
-	fmt.Println("Creating bid:", bid)
 	return p.db.WithContext(ctx).Create(bid).Error
 }
 

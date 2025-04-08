@@ -26,7 +26,6 @@ func (h *Handler) CreateAuction(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	fmt.Println("Creating auction in handlers:", auction)
 
 	if auction.StartingBid <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "starting_bid must be greater than 0"})
@@ -84,17 +83,15 @@ type WinnerRequest struct {
 
 func (h *Handler) SetAuctionWinner(c *gin.Context) {
 	id := c.Param("id")
-	fmt.Println("Setting auction winner for ID:", id)
+	
 
 	// Bind JSON to a struct instead of directly to an int
 	var req WinnerRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		fmt.Println("Error binding JSON:", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
 
-	fmt.Println("Winner ID:", req.WinnerID)
 	if req.WinnerID <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "winner_id must be greater than 0"})
 		return

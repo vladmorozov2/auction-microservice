@@ -18,7 +18,6 @@ func (p *PostgreSQL) CreateAuction(ctx context.Context, auction *models.Auction)
 		auction.Status = "open"
 	}
 
-	fmt.Println("Creating auction:", auction)
 
 	return p.db.WithContext(ctx).Create(auction).Error
 }
@@ -41,7 +40,6 @@ func (p *PostgreSQL) GetAuctionByID(ctx context.Context, id string) (*models.Auc
 	return &auction, nil
 }
 func (p *PostgreSQL) SetAuctionWinner(ctx context.Context, auctionID string, winnerID int) error {
-	fmt.Println("Setting auction winner:", auctionID, winnerID)
 	return p.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// Fetch the auction to check its current state
 		var auction models.Auction

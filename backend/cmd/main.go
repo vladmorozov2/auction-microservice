@@ -18,8 +18,6 @@ var gormDB *gorm.DB
 func main() {
 	var err error
 	gormDB, err = connectToPostgreSQL()
-	var auction models.Auction
-	fmt.Println(auction)
 	if err != nil {
 		log.Fatalf("Error connecting to the database: %v", err)
 	}
@@ -52,7 +50,7 @@ func connectToPostgreSQL() (*gorm.DB, error) {
 		return nil, fmt.Errorf("failed to auto migrate: %v", err)
 	}
 
-	log.Println("Connected to PostgreSQL")
+
 	return db, nil
 }
 
